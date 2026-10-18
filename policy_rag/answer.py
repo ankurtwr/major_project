@@ -14,7 +14,7 @@ client = genai.Client(api_key=GEMINI_API_KEY)
 
 
 sentence_transformer_ef = embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-mpnet-base-v2")
-chroma_client = chromadb.PersistentClient(path="chroma_db")
+chroma_client = chromadb.PersistentClient(path="./chroma_db")
 collection =chroma_client.get_or_create_collection(name='policy_data', embedding_function=sentence_transformer_ef)
 
 
@@ -27,9 +27,9 @@ results = collection.query(
     n_results=n_results,
     include=['documents','metadatas','distances']
 )
-print(results)
 
-prompt = "Answer flowwing QUESTIONS using DOCUMENT  as context."
+
+prompt = "Answer following QUESTIONS using DOCUMENT  as context."
 prompt+=f"QUESTION: {query_text}"
 prompt+=f"DOCUMENT: {results['documents'][0]}"
 
