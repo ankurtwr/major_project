@@ -34,7 +34,7 @@ prompt+=f"QUESTION: {query_text}"
 prompt+=f"DOCUMENT: {results['documents'][0]}"
 
 response = client.models.generate_content(
-    model="gemini-3.1-flash-lite",
+    model="gemini-3.5-flash-lite",
     contents=prompt
 )
 print(f'QUESTION: {query_text}')
