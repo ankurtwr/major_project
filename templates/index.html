@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document Q&A</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --border-focus: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --secondary: #334155;
+      --secondary-hover: #475569;
+      --error: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 24px;
+    }
+
+    /* Top-left button controls as requested */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.15s ease-in-out;
+      outline: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-enter {
+      background-color: var(--primary);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-enter:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-clear {
+      background-color: var(--secondary);
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .btn-clear:hover:not(:disabled) {
+      background-color: var(--secondary-hover);
+    }
+
+    .main-container {
+      width: 100%;
+      max-width: 820px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-label {
+      font-size: 14px;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      padding: 14px 16px;
+      background-color: var(--card-bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      line-height: 1.5;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+
+    textarea:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+    }
+
+    .output-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      min-height: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .output-header {
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .output-content {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .output-content.empty {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .status-text {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .error-text {
+      color: var(--error);
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top-left buttons -->
+  <div class="top-bar">
+    <button id="enter-btn" class="btn btn-enter" type="button">Enter</button>
+    <button id="clear-btn" class="btn btn-clear" type="button">Clear</button>
+  </div>
+
+  <main class="main-container">
+    <div class="input-group">
+      <label for="query-input" class="input-label">Question</label>
+      <textarea 
+        id="query-input" 
+        placeholder="Type your question about the documents here..."
+        autofocus
+      ></textarea>
+    </div>
+
+    <section class="output-section">
+      <div class="output-header">Answer</div>
+      <div id="output-content" class="output-content empty">No question submitted yet.</div>
+    </section>
+  </main>
+
+  <script>
+    const queryInput = document.getElementById('query-input');
+    const enterBtn = document.getElementById('enter-btn');
+    const clearBtn = document.getElementById('clear-btn');
+    const outputContent = document.getElementById('output-content');
+
+    // Handle endpoint resolution (supports file:// and direct host)
+    const API_ENDPOINT = (window.location.protocol === 'file:' || !window.location.host)
+      ? 'http://127.0.0.1:8000/ask'
+      : '/ask';
+
+    async function handleAsk() {
+      const query = queryInput.value.trim();
+      if (!query) {
+        queryInput.focus();
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ query: query })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned status ${response.status}`);
+        }
+
+        const data = await response.json();
+        outputContent.className = 'output-content';
+        outputContent.textContent = data.answer || 'No answer returned.';
+      } catch (err) {
+        outputContent.className = 'output-content error-text';
+        outputContent.textContent = `Error: ${err.message}. Please ensure ask.py is running.`;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    function handleClear() {
+      queryInput.value = '';
+      outputContent.className = 'output-content empty';
+      outputContent.textContent = 'No question submitted yet.';
+      queryInput.focus();
+    }
+
+    function setLoading(isLoading) {
+      enterBtn.disabled = isLoading;
+      clearBtn.disabled = isLoading;
+      queryInput.disabled = isLoading;
+
+      if (isLoading) {
+        outputContent.className = 'output-content status-text';
+        outputContent.textContent = 'Searching documents and generating answer...';
+      }
+    }
+
+    // Event listeners
+    enterBtn.addEventListener('click', handleAsk);
+    clearBtn.addEventListener('click', handleClear);
+
+    queryInput.addEventListener('keydown', (e) => {
+      // Pressing Ctrl+Enter or Cmd+Enter triggers Enter
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        handleAsk();
+      }
+    });
+  </script>
+</body>
+</html>
