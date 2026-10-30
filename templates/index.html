@@ -257,7 +257,7 @@
 
     queryInput.addEventListener('keydown', (e) => {
       // Pressing Ctrl+Enter or Cmd+Enter triggers Enter
-      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         handleAsk();
       }
