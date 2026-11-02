@@ -5,8 +5,7 @@ from dotenv import load_dotenv
 import os
 
 
-env_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(env_path)
+load_dotenv()
 
 SQLALCHEMY_DATABASE_URL = os.getenv('SQLALCHEMY_DATABASE_URL')
 
