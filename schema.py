@@ -10,4 +10,11 @@ class Register(BaseModel):
 class Show_user(BaseModel):
     name : str
     role : str
+
+class Successful(BaseModel):
+    msg : str
+    
+class login_credentials(BaseModel):
+    id : int
+    password : str
     
