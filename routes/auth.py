@@ -1,28 +1,14 @@
-from fastapi import FastAPI, Depends, status, Response, HTTPException
+from fastapi import APIRouter, Depends, status, Response, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
-import models
-import schema
-import hashing
-from database import engine, SessionLocal
+from ..import models, schema, hashing
+
+from ..database import get_db
 
 
-
-
-
-
-app = FastAPI()
-models.Base.metadata.create_all(engine) 
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db 
-    finally:
-        db.close()
+router = APIRouter()
     
 
-@app.post('/register',response_model=schema.Show_user,tags=['user'])
+@router.post('/register',response_model=schema.Show_user,tags=['user'])
 def register_user(request:schema.Register,db:Session = Depends(get_db)):
     new_user = models.User_Base(
         name = request.name,
@@ -37,7 +23,7 @@ def register_user(request:schema.Register,db:Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@app.post('/login',response_model = schema.Successful,tags=['user'])
+@router.post('/login',response_model = schema.Successful,tags=['user'])
 def login(request:schema.login_credentials,response : Response,db: Session = Depends(get_db)):
     id = request.id
     password = request.password

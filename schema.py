@@ -18,3 +18,6 @@ class login_credentials(BaseModel):
     id : int
     password : str
     
+class QueryRequest(BaseModel):
+    query:str
+    
